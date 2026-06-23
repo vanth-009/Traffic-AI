@@ -1,3 +1,10 @@
+# 🌐 Urban Traffic Digital Twin & Intelligence System
+
+Welcome to the **Urban Traffic Digital Twin**, an advanced predictive analytics and decision-support platform designed to model, simulate, and manage urban traffic congestion and events in Bengaluru. 
+
+By leveraging historical incident data, machine learning predictive pipelines (XGBoost, LightGBM, Spatial KNN), and an AI-powered conversational chatbot assistant, this system acts as a digital twin to help municipal planners and traffic police predict bottlenecks, deploy resources, and plan routes dynamically.
+
+---
 ## ✨ Features
 
 ### 1. 🔮 ML Predictive Forecasting Engine
@@ -85,41 +92,168 @@ Timeline Stages:
 * **ML Layer:** XGBoost Models, Spatial KNN Models.
 * **Data Layer:** Historical Bengaluru Traffic Events Dataset, Corridor Risk Database, Junction Risk Database, Zone Risk Database.
 
+
 ### 📐 Architecture Diagram
 
 ```mermaid
 graph TD
+    classDef frontend fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff;
+    classDef backend fill:#059669,stroke:#047857,stroke-width:2px,color:#fff;
+    classDef service fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff;
+    classDef data fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff;
+    classDef external fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff;
 
-    A[Historical Traffic Events Dataset]
+    subgraph Frontend ["Frontend App (React + Vite)"]
+        UI["React SPA Dashboard"]:::frontend
+        MapComp["Leaflet Interactive Map"]:::frontend
+        ChatUI["ChatWindow Component"]:::frontend
+        APIClient["Axios API Client (services/api.js)"]:::frontend
+    end
 
-    A --> B[Feature Engineering & Risk Analytics]
+    subgraph Backend ["Backend API Server (FastAPI + Uvicorn)"]
+        Main["FastAPI Router (app.main:app)"]:::backend
+        ForecastRoute["Forecast Router (routes/forecast.py)"]:::backend
+        ChatRoute["Chat Router (routes/forecast.py /chat)"]:::backend
+    end
 
-    B --> C[Spatial Intelligence Engine KNN]
-    B --> D[Road Closure Prediction Model]
-    B --> E[Clearance Time Prediction Model]
-    B --> F[Congestion Risk Classification Model]
+    subgraph Services ["Service Layer & Engines"]
+        TrafficEngine["Traffic Engine (app.services.traffic_engine)"]:::service
+        ChatbotService["Chatbot Service (app.services.chatbot)"]:::service
+        KNN["Spatial KNN Imputers (Corridor, Junction, Zone)"]:::service
+        XGBoost["XGBoost Models (Closure, Clearance, Risk)"]:::service
+    end
 
-    C --> G[Forecast Engine]
-    D --> G
-    E --> G
-    F --> G
+    subgraph Data ["Data Layer"]
+        CSV["Dataset (dataset/traffic_events.csv)"]:::data
+    end
 
-    G --> H[Traffic Command Center]
-    G --> I[Interactive Digital Twin Map]
-    G --> J[AI Traffic Assistant]
-    G --> K[PDF Reporting Engine]
-    G --> L[Android Mobile Application]
+    subgraph External ["External Services"]
+        Groq["Groq Cloud API (Llama 3.3)"]:::external
+        ORS["OpenRouteService API"]:::external
+    end
 
-    I --> M[Event Impact Timeline]
-    I --> N[Digital Twin Replay Engine]
+    UI --> MapComp
+    UI --> ChatUI
+    UI --> APIClient
+    ChatUI --> APIClient
 
-    H --> O[Officer Allocation]
-    H --> P[Barricade Planning]
-    H --> Q[Diversion Route Optimization]
+    APIClient -->|HTTP POST /forecast| ForecastRoute
+    APIClient -->|HTTP POST /chat| ChatRoute
+    MapComp -->|Map Routing Requests| ORS
 
-    J --> R[Groq Llama 3.3 API]
+    ForecastRoute --> TrafficEngine
+    ChatRoute --> ChatbotService
 
-    O --> S[Operational Decision Support]
-    P --> S
-    Q --> S
+    ChatbotService -->|Session Context / Prompt| Groq
+    Groq -->|Structured Params / Response| ChatbotService
+    ChatbotService -->|Calls forecast| TrafficEngine
+
+    TrafficEngine -->|Loads on Startup| CSV
+    TrafficEngine -->|Imputes Coordinates| KNN
+    TrafficEngine -->|Generates Predictions| XGBoost
 ```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+* **Node.js** (v18 or higher recommended)
+* **Python** (v3.10 to v3.13)
+* **Groq API Key** (obtainable from [Groq Console](https://console.groq.com/))
+* **OpenRouteService API Key** (optional, for map routing, obtainable from [OpenRouteService](https://openrouteservice.org/))
+
+---
+
+### 📥 1. Backend Setup & Run
+
+The backend API handles model training on startup, coordinates simulations, and runs the LLM chatbot service.
+
+1. **Navigate to the Backend Directory:**
+   ```bash
+   cd backend
+   ```
+
+2. **Create a Python Virtual Environment:**
+   ```bash
+   python -m venv .venv
+   ```
+
+3. **Activate the Virtual Environment:**
+   * **macOS/Linux:**
+     ```bash
+     source .venv/bin/activate
+     ```
+   * **Windows:**
+     ```bash
+     .venv\Scripts\activate
+     ```
+
+4. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+   > [!NOTE]
+   > For macOS Apple Silicon users, `libomp` (OpenMP) is dynamically loaded by the application for XGBoost compatibility. Ensure your environment compiles scikit-learn/xgboost properly.
+
+5. **Configure Environment Variables:**
+   Create a `.env` file in the `backend/` directory:
+   ```env
+   GROQ_API_KEY=your_groq_api_key_here
+   ```
+
+6. **Start the FastAPI Server:**
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+   The backend API will start at `http://127.0.0.1:8000`.
+
+---
+
+### 🎨 2. Frontend Setup & Run
+
+The React frontend presents a visual digital twin dashboard and the conversational assistant window.
+
+1. **Navigate to the Frontend Directory:**
+   ```bash
+   cd frontend-redesign_V2
+   ```
+
+2. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables:**
+   Create a `.env` file in the `frontend-redesign_V2/` directory:
+   ```env
+   VITE_ORS_API_KEY=your_openrouteservice_key_here
+   VITE_API_BASE_URL=http://127.0.0.1:8000
+   ```
+
+4. **Start the Vite Development Server:**
+   ```bash
+   npm run dev
+   ```
+   The application will start at `http://localhost:5173`.
+
+---
+
+## 🛠️ Testing the Setup
+
+You can verify the backend API endpoints directly:
+
+* **Forecast Endpoint Test:**
+  ```bash
+  curl -X POST "http://127.0.0.1:8000/forecast" \
+       -H "Content-Type: application/json" \
+       -d '{"event_type":"protest","attendance":5000,"duration_hours":2,"corridor":"Mysore Road","junction":"MekhriCircle","road_closure":true,"start_hour":12}'
+  ```
+
+* **Chatbot Endpoint Test:**
+  ```bash
+  curl -X POST "http://127.0.0.1:8000/chat" \
+       -H "Content-Type: application/json" \
+       -d '{"message":"What happens if a political rally with 15000 people starts at 6 PM on Bellary Road?"}'
+  ```
+
